@@ -173,7 +173,7 @@
                     })
                 },
                 searchEvent(){
-                    alert('masuk')
+                    
                     let token=localStorage.getItem('token')
                     console.log(app.word)
                     axios.get(`http://localhost:3000/events/search/${app.word}`,{
