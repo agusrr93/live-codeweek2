@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+ </head>
+<body>
+    <div id="app">
+        
+        <div class="topnav">
+                <a class="active" href="#home">H8 EVENT MANAGER</a>
+                <div class="login-container">
+                    <input type="text" placeholder="Email" name="username" v-model="email" v-if=!token>
+                    <input type="password" placeholder="Password" name="psw" v-model="password" v-if=!token>
+                    <button v-if=!token type="submit" @click="login">Login</button> 
+                    <button v-if=token type="submit" @click="logout">Logout</button> 
+                </div>
+        </div>
+        <div class="alert alert-danger" role="alert" v-if=isSame>
+                <strong>Email</strong> dan password tidak cocok!
+        </div>
+        <div class="alert alert-danger" role="alert" v-if=isSame>
+                <strong>Email</strong> dan password tidak cocok!
+        </div>
+
+    <br><br>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-3" v-if=token>
+          <h4>Add new Event</h4>
+          <div class="list-group">
+            <!-- <form> -->
+              <div class="form-group">
+                <input type="text" class="form-control" placeholder="Event" v-model="name_event"> 
+              </div>
+              <div class="form-group">
+                <input type="text" class="form-control" placeholder="Location" v-model="location">
+              </div>
+              <div class="form-group">
+                <input type="text" class="form-control" placeholder="Address" v-model="adress">
+              </div>
+              <button type="submit" class="btn btn-default" @click="addEvent">Submit</button>
+            <!-- </form> -->
+          </div>
+          <hr>
+          <h4>Search</h4>
+          <div class="list-group">
+            
+              <div class="form-group">
+                <input type="text" v-model="word" class="form-control" placeholder="Search...">
+              </div>
+              <button type="submit" class="btn btn-default" @click="searchEvent()">Submit</button>
+            
+          </div>
+          <hr>
+          <h4>Maps</h4>
+        </div>
+        <!-- /.col-lg-3 -->
+
+        <div class="col-lg-9">
+          <div class="row">
+            <div class="col-lg-4 col-sm-6 portfolio-item" v-for="event in eventContent">
+              <div class="card h-70">
+                <div class="card-body">
+                  <h4 class="card-title">
+                    <a href="#">{{event.name}}</a>
+                  </h4>
+                  <div>{{event.location}}</div>
+                  <div>{{event.adress}}</div>
+                  </div><button v-if=token>show on maps</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+    </div>
+
+       
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        let app = new Vue({
+            el:'#app',
+            data: {
+                name: '',
+                email: '',
+                password: '',
+                name_event:'',
+                location:'',
+                adress:'',
+                isLogin: false,
+                success: false,
+                isSame:false,
+                error: false,
+                successMsg: '',
+                errorMsg: '',
+                token:'',
+                eventContent:[],
+                description:'',
+                profile:[],
+                word:''
+            },
+            methods: {
+                login() {
+                    axios.post('http://localhost:3000/users/login', {
+                        email: app.email,
+                        password: app.password
+                    })
+                    .then(result=>{
+                        app.isSame=false
+                        app.token=result.data.token
+                    
+                        localStorage.setItem('token',app.token)
+                    })
+                    .catch(err=>{
+                        app.isSame=true
+                        console.log(err)
+                    })
+                },
+                logout(){
+                    localStorage.removeItem('token')
+                    app.token=''
+                    this.getEvents()
+                },
+                addEvent(){
+                    let token=localStorage.getItem('token')
+                    console.log("token ini",token)
+                    axios.post('http://localhost:3000/events',{
+                        name: app.name_event,
+                        location:app.location,
+                        adress:app.adress
+                    },{
+                        headers:{
+                            access_token:token
+                        }
+                    })
+                    .then(result=>{
+                        this.getEvents()
+                    })
+                    .catch(err=>{
+                        console.log(err)
+                    })
+                },
+                getEvents(){
+                    axios.get('http://localhost:3000/events')
+                    .then(result=>{
+                        app.eventContent=result.data
+                    })
+                    .catch(err=>{
+                        console.log(err)
+                    })
+                }
+                ,getProfile(){
+                    let token=localStorage.getItem('token')
+                    axios.get('http://localhost:3000/users/profile',{
+                        headers:{
+                            access_token:token
+                        }
+                    })
+                    .then(result=>{
+                        app.profile=result.data
+                    })
+                    .catch(err=>{
+                        console.log(err)
+                    })
+                },
+                searchEvent(){
+                    alert('masuk')
+                    let token=localStorage.getItem('token')
+                    console.log(app.word)
+                    axios.get(`http://localhost:3000/events/search/${app.word}`,{
+                        headers:{
+                            access_token:token
+                        }
+                    })
+                    .then(result=>{
+                        app.eventContent=result.data
+                    })
+                    .catch(err=>{
+                        console.log(err)
+                    })
+
+                },
+                deleteEvent(id){
+                    let token=localStorage.getItem('token')
+                    
+                    axios.delete(`http://localhost:3000/quotes/${id}`,{
+                        headers:{
+                            access_token: token
+                        }
+                    })
+                    .then(result=>{
+                        app.getQuotes()
+                    })
+                    .catch(err=>{
+                        console.log(err)
+                    })
+                }
+                
+            },
+            created() {
+                this.token=localStorage.getItem('token') 
+
+                this.getEvents()
+                this.getProfile()
+            }
+        })
+    </script>
+</body>
+</html>
